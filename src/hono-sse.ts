@@ -70,7 +70,7 @@ interface ExecuteScriptOptions extends DatastarEventOptions {
  * Direct Hono SSE implementation for Datastar
  * This replaces the ServerSentEventGenerator with native Hono SSE capabilities
  */
-export class HonoDatastarSSE {
+class HonoDatastarSSE {
   private controller: ReadableStreamDefaultController<Uint8Array>;
   private encoder: TextEncoder;
 
@@ -276,7 +276,7 @@ async function parseSignalsFromBody(
 /**
  * Read signals from client (same as ServerSentEventGenerator.readSignals)
  */
-export async function readSignals(
+async function readSignals(
   c: Context
 ): Promise<
   | { success: true; signals: Record<string, Jsonifiable> }
