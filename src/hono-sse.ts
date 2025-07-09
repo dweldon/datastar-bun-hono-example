@@ -1,4 +1,3 @@
-import type { Context } from "hono";
 import type { Jsonifiable } from "type-fest";
 
 // SSE headers for Datastar
@@ -19,24 +18,6 @@ const EVENT_TYPES = {
 
 // Other constants
 const DEFAULT_RETRY_DURATION = 1000;
-const DATASTAR_PARAM_NAME = "datastar";
-
-// Type guard for error objects
-function isErrorWithMessage(error: unknown): error is { message: string } {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "message" in error &&
-    typeof (error as { message: unknown }).message === "string"
-  );
-}
-
-// Helper function to extract error message
-function getErrorMessage(error: unknown): string {
-  return isErrorWithMessage(error)
-    ? error.message
-    : "unknown error when parsing request";
-}
 
 interface DatastarEventOptions {
   eventId?: string;
@@ -235,63 +216,4 @@ export function createDatastarStream(
   return new Response(stream, {
     headers: SSE_HEADERS,
   });
-}
-
-/**
- * Parse signals from GET request parameters
- */
-function parseSignalsFromParams(params: URLSearchParams) {
-  if (!params.has(DATASTAR_PARAM_NAME)) {
-    throw new Error("No datastar object in request");
-  }
-
-  const datastarParam = params.get(DATASTAR_PARAM_NAME);
-  if (!datastarParam) {
-    throw new Error("Datastar param is null");
-  }
-
-  const signals = JSON.parse(datastarParam) as unknown;
-  if (typeof signals !== "object" || signals === null) {
-    throw new Error("Datastar param is not a record");
-  }
-
-  return signals as Record<string, Jsonifiable>;
-}
-
-/**
- * Parse signals from POST request body
- */
-async function parseSignalsFromBody(
-  c: Context
-): Promise<Record<string, Jsonifiable>> {
-  const body = await c.req.text();
-
-  if (typeof body !== "string") {
-    throw new Error("body was not a string");
-  }
-
-  return JSON.parse(body) as Record<string, Jsonifiable>;
-}
-
-/**
- * Read signals from client (same as ServerSentEventGenerator.readSignals)
- */
-async function readSignals(
-  c: Context
-): Promise<
-  | { success: true; signals: Record<string, Jsonifiable> }
-  | { success: false; error: string }
-> {
-  try {
-    if (c.req.method === "GET") {
-      const url = new URL(c.req.url);
-      const signals = parseSignalsFromParams(url.searchParams);
-      return { success: true, signals };
-    }
-
-    const signals = await parseSignalsFromBody(c);
-    return { success: true, signals };
-  } catch (error) {
-    return { success: false, error: getErrorMessage(error) };
-  }
 }
