@@ -2,7 +2,7 @@ import { Hono } from "hono";
 
 import { Page } from "./client/Page";
 import { Shape, SHAPES } from "./client/Shape";
-import { createDatastarStream } from "./datastar";
+import { createDatastarStream } from "./hono-sse";
 
 const app = new Hono();
 
