@@ -3,8 +3,8 @@ import type { Jsonifiable } from "type-fest";
 
 // SSE headers for Datastar
 const SSE_HEADERS = {
-  "Cache-Control": "no-cache",
   Connection: "keep-alive",
+  "Cache-Control": "no-cache",
   "Content-Type": "text/event-stream",
 } as const;
 
@@ -16,6 +16,27 @@ const EVENT_TYPES = {
   REMOVE_SIGNALS: "datastar-remove-signals",
   EXECUTE_SCRIPT: "datastar-execute-script",
 } as const;
+
+// Other constants
+const DEFAULT_RETRY_DURATION = 1000;
+const DATASTAR_PARAM_NAME = "datastar";
+
+// Type guard for error objects
+function isErrorWithMessage(error: unknown): error is { message: string } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "message" in error &&
+    typeof (error as { message: unknown }).message === "string"
+  );
+}
+
+// Helper function to extract error message
+function getErrorMessage(error: unknown): string {
+  return isErrorWithMessage(error)
+    ? error.message
+    : "unknown error when parsing request";
+}
 
 interface DatastarEventOptions {
   eventId?: string;
@@ -51,9 +72,11 @@ interface ExecuteScriptOptions extends DatastarEventOptions {
  */
 export class HonoDatastarSSE {
   private controller: ReadableStreamDefaultController<Uint8Array>;
+  private encoder: TextEncoder;
 
   constructor(controller: ReadableStreamDefaultController<Uint8Array>) {
     this.controller = controller;
+    this.encoder = new TextEncoder();
   }
 
   private sendEvent(
@@ -62,21 +85,24 @@ export class HonoDatastarSSE {
     options: DatastarEventOptions = {}
   ) {
     const { eventId, retryDuration } = options;
-
-    let message = `event: ${eventType}\n`;
+    const messageParts: string[] = [`event: ${eventType}`];
 
     if (eventId) {
-      message += `id: ${eventId}\n`;
+      messageParts.push(`id: ${eventId}`);
     }
 
-    if (retryDuration && retryDuration !== 1000) {
-      message += `retry: ${retryDuration}\n`;
+    if (retryDuration && retryDuration !== DEFAULT_RETRY_DURATION) {
+      messageParts.push(`retry: ${retryDuration}`);
     }
 
-    message += dataLines.map((line) => `data: ${line}`).join("\n");
-    message += "\n\n";
+    // Add data lines
+    dataLines.forEach((line) => messageParts.push(`data: ${line}`));
 
-    this.controller.enqueue(new TextEncoder().encode(message));
+    // Add final newlines
+    messageParts.push("", "");
+
+    const message = messageParts.join("\n");
+    this.controller.enqueue(this.encoder.encode(message));
   }
 
   /**
@@ -212,6 +238,42 @@ export function createDatastarStream(
 }
 
 /**
+ * Parse signals from GET request parameters
+ */
+function parseSignalsFromParams(params: URLSearchParams) {
+  if (!params.has(DATASTAR_PARAM_NAME)) {
+    throw new Error("No datastar object in request");
+  }
+
+  const datastarParam = params.get(DATASTAR_PARAM_NAME);
+  if (!datastarParam) {
+    throw new Error("Datastar param is null");
+  }
+
+  const signals = JSON.parse(datastarParam) as unknown;
+  if (typeof signals !== "object" || signals === null) {
+    throw new Error("Datastar param is not a record");
+  }
+
+  return signals as Record<string, Jsonifiable>;
+}
+
+/**
+ * Parse signals from POST request body
+ */
+async function parseSignalsFromBody(
+  c: Context
+): Promise<Record<string, Jsonifiable>> {
+  const body = await c.req.text();
+
+  if (typeof body !== "string") {
+    throw new Error("body was not a string");
+  }
+
+  return JSON.parse(body) as Record<string, Jsonifiable>;
+}
+
+/**
  * Read signals from client (same as ServerSentEventGenerator.readSignals)
  */
 export async function readSignals(
@@ -220,66 +282,16 @@ export async function readSignals(
   | { success: true; signals: Record<string, Jsonifiable> }
   | { success: false; error: string }
 > {
-  if (c.req.method === "GET") {
-    const url = new URL(c.req.url);
-    const params = url.searchParams;
-
-    try {
-      if (params.has("datastar")) {
-        const datastarParam = params.get("datastar");
-        if (!datastarParam) {
-          throw new Error("Datastar param is null");
-        }
-        const signals = JSON.parse(datastarParam) as unknown;
-        if (typeof signals === "object" && signals !== null) {
-          return {
-            success: true,
-            signals: signals as Record<string, Jsonifiable>,
-          };
-        } else {
-          throw new Error("Datastar param is not a record");
-        }
-      } else {
-        throw new Error("No datastar object in request");
-      }
-    } catch (e: unknown) {
-      if (
-        typeof e === "object" &&
-        e !== null &&
-        "message" in e &&
-        typeof e.message === "string"
-      ) {
-        return { success: false, error: e.message };
-      } else {
-        return {
-          success: false,
-          error: "unknown error when parsing request",
-        };
-      }
-    }
-  }
-
-  const body = await c.req.text();
-  let parsedBody: Record<string, Jsonifiable> = {};
-
   try {
-    if (typeof body !== "string") throw Error("body was not a string");
-    parsedBody = JSON.parse(body) as Record<string, Jsonifiable>;
-  } catch (e: unknown) {
-    if (
-      typeof e === "object" &&
-      e !== null &&
-      "message" in e &&
-      typeof e.message === "string"
-    ) {
-      return { success: false, error: e.message };
-    } else {
-      return {
-        success: false,
-        error: "unknown error when parsing request",
-      };
+    if (c.req.method === "GET") {
+      const url = new URL(c.req.url);
+      const signals = parseSignalsFromParams(url.searchParams);
+      return { success: true, signals };
     }
-  }
 
-  return { success: true, signals: parsedBody };
+    const signals = await parseSignalsFromBody(c);
+    return { success: true, signals };
+  } catch (error) {
+    return { success: false, error: getErrorMessage(error) };
+  }
 }
