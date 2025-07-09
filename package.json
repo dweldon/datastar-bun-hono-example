@@ -1,0 +1,20 @@
+{
+  "name": "datastar-bun-hono-example",
+  "module": "index.tsx",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun run --hot src/index.tsx",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "hono": "^4.8.4",
+    "type-fest": "^4.41.0"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}
