@@ -12,7 +12,7 @@ export const Page = ({ children }: PropsWithChildren) => (
       <main data-signals-shape="">
         <p>Click the button to get a shape</p>
         <p data-show="$shape.length > 0">
-          You selected: <span data-text="$shape"></span>
+          You got: <span data-text="$shape"></span>
         </p>
         {children}
         <button data-on-click="@get('/shape')">Get Shape</button>

@@ -6,6 +6,9 @@ import { createDatastarStream } from "./datastar";
 
 const app = new Hono();
 
+// Keep track of the last selected shape index
+let lastShapeIndex = -1;
+
 app.get("/", (c) =>
   c.html(
     <Page>
@@ -15,12 +18,13 @@ app.get("/", (c) =>
 );
 
 app.get("/shape", () => {
-  const randomIndex = Math.floor(Math.random() * SHAPES.length);
-  const randomShape = SHAPES[randomIndex]!;
+  // Rotate to the next shape index
+  lastShapeIndex = (lastShapeIndex + 1) % SHAPES.length;
+  const nextShape = SHAPES[lastShapeIndex]!;
 
   return createDatastarStream((sse) => {
-    sse.mergeSignals({ shape: randomShape });
-    sse.mergeFragments(<Shape shape={randomShape} />);
+    sse.mergeSignals({ shape: nextShape });
+    sse.mergeFragments(<Shape shape={nextShape} />);
   });
 });
 
