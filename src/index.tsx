@@ -29,7 +29,10 @@ app.get('/shape', async (c) => {
   return ServerSentEventGenerator.stream(c, async (stream) => {
     await stream.patchSignals({ signals: { shape: nextShape } });
     await Bun.sleep(200);
-    await stream.patchElements({ elements: <Shape shape={nextShape} /> });
+    await stream.patchElements({
+      elements: <Shape shape={nextShape} />,
+      options: { useViewTransition: true },
+    });
     await Bun.sleep(200);
     await stream.executeScript({
       script: `console.log("The shape is ${nextShape}")`,

@@ -71,19 +71,19 @@ class DatastarStreamingApi {
     options,
   }: PatchSignalsParameters): Promise<void> {
     const signalsString = JSON.stringify(signals);
-    const signalsLines = this.prefixDataLines('signals', signalsString);
-    const data = this.joinDataLines([
-      ...(options?.onlyIfMissing
-        ? this.prefixDataLines('onlyIfMissing', 'true')
-        : []),
-      ...signalsLines,
-    ]);
+
+    const dataLines: string[] = [];
+    if (options?.onlyIfMissing === true) {
+      dataLines.push('onlyIfMissing true');
+    }
+
+    dataLines.push(...this.prefixDataLines('signals', signalsString));
 
     return this.send({
       id: options?.eventId,
       retry: options?.retryDuration,
       event: EVENT_PATCH_SIGNALS,
-      data,
+      data: this.joinDataLines(dataLines),
     });
   }
 
@@ -91,26 +91,27 @@ class DatastarStreamingApi {
     elements,
     options,
   }: PatchElementsParameters): Promise<void> {
-    const elementsString = String(elements);
-    const elementsLines = this.prefixDataLines('elements', elementsString);
-    const data = this.joinDataLines([
-      ...(options?.mode && options.mode !== 'outer'
-        ? this.prefixDataLines('mode', options.mode)
-        : []),
-      ...(options?.selector
-        ? this.prefixDataLines('selector', options.selector)
-        : []),
-      ...(options?.useViewTransition === true
-        ? this.prefixDataLines('useViewTransition', 'true')
-        : []),
-      ...elementsLines,
-    ]);
+    const elementsString =
+      typeof elements === 'string' ? elements : String(elements);
+
+    const dataLines: string[] = [];
+    if (options?.mode && options.mode !== 'outer') {
+      dataLines.push(`mode ${options.mode}`);
+    }
+    if (options?.selector) {
+      dataLines.push(`selector ${options.selector}`);
+    }
+    if (options?.useViewTransition === true) {
+      dataLines.push('useViewTransition true');
+    }
+
+    dataLines.push(...this.prefixDataLines('elements', elementsString));
 
     return this.send({
       id: options?.eventId,
       retry: options?.retryDuration,
       event: EVENT_PATCH_ELEMENTS,
-      data,
+      data: this.joinDataLines(dataLines),
     });
   }
 
@@ -119,8 +120,11 @@ class DatastarStreamingApi {
     options,
   }: ExecuteScriptParameters): Promise<void> {
     const attributes: string[] = options?.attributes ?? [];
-    if (options?.autoRemove !== false)
+
+    const shouldAutoRemove = options?.autoRemove ?? true;
+    if (shouldAutoRemove) {
       attributes.push('data-effect="el.remove()"');
+    }
 
     const attributesString =
       attributes.length > 0 ? ` ${attributes.join(' ')}` : '';
@@ -178,6 +182,13 @@ type ReadSignalsResponse = ReadSignalsError | ReadSignalsSuccess;
 
 const QUERY_PARAMETER = 'datastar';
 
+const MAX_JSON_SIZE = 1024 * 1024;
+
+const READ_SIGNALS_SIZE_ERROR: ReadSignalsError = {
+  success: false,
+  error: 'Request payload too large',
+};
+
 const READ_SIGNALS_PARSE_ERROR: ReadSignalsError = {
   success: false,
   error: 'Unknown error while parsing request',
@@ -193,6 +204,10 @@ const readSignalsFromQuery = (req: HonoRequest): ReadSignalsResponse => {
   const queryString = req.query(QUERY_PARAMETER);
   if (!queryString) {
     return { success: false, error: 'No datastar object in request' };
+  }
+
+  if (queryString.length > MAX_JSON_SIZE) {
+    return READ_SIGNALS_SIZE_ERROR;
   }
 
   try {
