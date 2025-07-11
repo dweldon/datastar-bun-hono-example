@@ -1,3 +1,17 @@
 {
+  "files.exclude": {
+    "**/.git": true,
+    "**/node_modules": true
+  },
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "files.insertFinalNewline": true,
+  "explorer.fileNesting.enabled": true,
+  "explorer.fileNesting.patterns": {
+    "package.json": ".*,*.lock,tsconfig*,*.config.js"
+  },
   "cSpell.words": ["datastar"]
 }

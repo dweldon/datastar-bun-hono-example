@@ -1,4 +1,4 @@
-import { type PropsWithChildren } from "hono/jsx";
+import { type PropsWithChildren } from 'hono/jsx';
 
 export const Page = ({ children }: PropsWithChildren) => (
   <html lang="en">

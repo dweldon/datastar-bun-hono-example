@@ -1,4 +1,4 @@
-export const SHAPES = ["note", "heart", "circle", "diamond"] as const;
+export const SHAPES = ['note', 'heart', 'circle', 'diamond'] as const;
 
 type Shape = (typeof SHAPES)[number];
 
@@ -7,10 +7,10 @@ type ShapeProps = {
 };
 
 const shapeCharacter = new Map<Shape, string>([
-  ["note", "♪"],
-  ["heart", "♥"],
-  ["circle", "○"],
-  ["diamond", "◆"],
+  ['note', '♪'],
+  ['heart', '♥'],
+  ['circle', '○'],
+  ['diamond', '◆'],
 ]);
 
 export const Shape = ({ shape }: ShapeProps) => {
@@ -19,7 +19,7 @@ export const Shape = ({ shape }: ShapeProps) => {
   return (
     <div
       id="shape"
-      style={{ color: "red", fontSize: "32px", marginBottom: "16px" }}
+      style={{ color: 'red', fontSize: '32px', marginBottom: '16px' }}
     >
       {shapeCharacter.get(shape)}
     </div>

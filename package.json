@@ -5,14 +5,23 @@
   "private": true,
   "scripts": {
     "dev": "bun run --hot src/index.tsx",
-    "type-check": "tsc --noEmit"
+    "lint": "eslint . --fix",
+    "format": "prettier --write src/",
+    "type-check": "tsc --noEmit",
+    "format-check": "prettier --log-level warn --check src/"
   },
   "dependencies": {
     "hono": "^4.8.4",
     "type-fest": "^4.41.0"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@eslint/js": "^9.30.1",
+    "@types/bun": "latest",
+    "@types/eslint-config-prettier": "^6.11.3",
+    "eslint": "^9.30.1",
+    "eslint-config-prettier": "^10.1.5",
+    "prettier": "^3.6.2",
+    "typescript-eslint": "^8.35.1"
   },
   "peerDependencies": {
     "typescript": "^5"

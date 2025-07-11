@@ -1,17 +1,17 @@
-import type { JsonObject } from "type-fest";
-import type { Context, HonoRequest } from "hono";
+import type { JsonObject } from 'type-fest';
+import type { Context, HonoRequest } from 'hono';
 import {
   streamSSE,
   type SSEMessage,
   type SSEStreamingApi,
-} from "hono/streaming";
+} from 'hono/streaming';
 
 // -----------------------------------------------------------------------------
 // Stream
 // -----------------------------------------------------------------------------
 
-const EVENT_PATCH_SIGNALS = "datastar-patch-signals";
-const EVENT_PATCH_ELEMENTS = "datastar-patch-elements";
+const EVENT_PATCH_SIGNALS = 'datastar-patch-signals';
+const EVENT_PATCH_ELEMENTS = 'datastar-patch-elements';
 
 type EventType = typeof EVENT_PATCH_SIGNALS | typeof EVENT_PATCH_ELEMENTS;
 
@@ -20,14 +20,14 @@ type DatastarSSEMessage = SSEMessage & {
 };
 
 type ElementPatchMode =
-  | "outer"
-  | "inner"
-  | "replace"
-  | "prepend"
-  | "append"
-  | "before"
-  | "after"
-  | "remove";
+  | 'outer'
+  | 'inner'
+  | 'replace'
+  | 'prepend'
+  | 'append'
+  | 'before'
+  | 'after'
+  | 'remove';
 
 type PatchSignalsParameters = {
   signals: JsonObject;
@@ -71,10 +71,10 @@ class DatastarStreamingApi {
     options,
   }: PatchSignalsParameters): Promise<void> {
     const signalsString = JSON.stringify(signals);
-    const signalsLines = this.prefixDataLines("signals", signalsString);
+    const signalsLines = this.prefixDataLines('signals', signalsString);
     const data = this.joinDataLines([
       ...(options?.onlyIfMissing
-        ? this.prefixDataLines("onlyIfMissing", "true")
+        ? this.prefixDataLines('onlyIfMissing', 'true')
         : []),
       ...signalsLines,
     ]);
@@ -92,16 +92,16 @@ class DatastarStreamingApi {
     options,
   }: PatchElementsParameters): Promise<void> {
     const elementsString = String(elements);
-    const elementsLines = this.prefixDataLines("elements", elementsString);
+    const elementsLines = this.prefixDataLines('elements', elementsString);
     const data = this.joinDataLines([
-      ...(options?.mode && options.mode !== "outer"
-        ? this.prefixDataLines("mode", options.mode)
+      ...(options?.mode && options.mode !== 'outer'
+        ? this.prefixDataLines('mode', options.mode)
         : []),
       ...(options?.selector
-        ? this.prefixDataLines("selector", options.selector)
+        ? this.prefixDataLines('selector', options.selector)
         : []),
       ...(options?.useViewTransition === true
-        ? this.prefixDataLines("useViewTransition", "true")
+        ? this.prefixDataLines('useViewTransition', 'true')
         : []),
       ...elementsLines,
     ]);
@@ -123,14 +123,14 @@ class DatastarStreamingApi {
       attributes.push('data-effect="el.remove()"');
 
     const attributesString =
-      attributes.length > 0 ? ` ${attributes.join(" ")}` : "";
+      attributes.length > 0 ? ` ${attributes.join(' ')}` : '';
     const scriptElement = `<script${attributesString}>${script}</script>`;
 
     return this.patchElements({
       elements: scriptElement,
       options: {
-        mode: "append",
-        selector: "body",
+        mode: 'append',
+        selector: 'body',
         eventId: options?.eventId,
         retryDuration: options?.retryDuration,
       },
@@ -142,11 +142,11 @@ class DatastarStreamingApi {
   }
 
   private joinDataLines(dataLines: string[]): string {
-    return dataLines.join("\n");
+    return dataLines.join('\n');
   }
 
   private prefixDataLines(prefix: string, data: string): string[] {
-    return data.split("\n").map((line) => `${prefix} ${line}`);
+    return data.split('\n').map((line) => `${prefix} ${line}`);
   }
 }
 
@@ -176,15 +176,15 @@ type ReadSignalsSuccess = {
 
 type ReadSignalsResponse = ReadSignalsError | ReadSignalsSuccess;
 
-const QUERY_PARAMETER = "datastar";
+const QUERY_PARAMETER = 'datastar';
 
 const READ_SIGNALS_PARSE_ERROR: ReadSignalsError = {
   success: false,
-  error: "Unknown error while parsing request",
+  error: 'Unknown error while parsing request',
 };
 
 const readSignals = (c: Context): Promise<ReadSignalsResponse> => {
-  return c.req.method === "GET"
+  return c.req.method === 'GET'
     ? Promise.resolve(readSignalsFromQuery(c.req as HonoRequest))
     : readSignalsFromBody(c.req as HonoRequest);
 };
@@ -192,7 +192,7 @@ const readSignals = (c: Context): Promise<ReadSignalsResponse> => {
 const readSignalsFromQuery = (req: HonoRequest): ReadSignalsResponse => {
   const queryString = req.query(QUERY_PARAMETER);
   if (!queryString) {
-    return { success: false, error: "No datastar object in request" };
+    return { success: false, error: 'No datastar object in request' };
   }
 
   try {
