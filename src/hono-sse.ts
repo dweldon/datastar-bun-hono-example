@@ -2,18 +2,14 @@ import type { Jsonifiable } from "type-fest";
 
 // SSE headers for Datastar
 const SSE_HEADERS = {
-  Connection: "keep-alive",
   "Cache-Control": "no-cache",
   "Content-Type": "text/event-stream",
 } as const;
 
 // Datastar event types
 const EVENT_TYPES = {
-  MERGE_SIGNALS: "datastar-merge-signals",
-  MERGE_FRAGMENTS: "datastar-merge-fragments",
-  REMOVE_FRAGMENTS: "datastar-remove-fragments",
-  REMOVE_SIGNALS: "datastar-remove-signals",
-  EXECUTE_SCRIPT: "datastar-execute-script",
+  PATCH_SIGNALS: "datastar-patch-signals",
+  PATCH_ELEMENTS: "datastar-patch-elements",
 } as const;
 
 // Other constants
@@ -24,26 +20,26 @@ interface DatastarEventOptions {
   retryDuration?: number;
 }
 
-interface MergeFragmentsOptions extends DatastarEventOptions {
+interface PatchElementsOptions extends DatastarEventOptions {
   selector?: string;
-  mergeMode?:
-    | "morph"
-    | "inner"
+  mode?:
     | "outer"
+    | "inner"
+    | "replace"
     | "prepend"
     | "append"
     | "before"
     | "after"
-    | "upsertAttributes";
+    | "remove";
   useViewTransition?: boolean;
 }
 
-interface MergeSignalsOptions extends DatastarEventOptions {
+interface PatchSignalsOptions extends DatastarEventOptions {
   onlyIfMissing?: boolean;
 }
 
 interface ExecuteScriptOptions extends DatastarEventOptions {
-  attributes?: Record<string, string> | string[];
+  attributes?: string[];
   autoRemove?: boolean;
 }
 
@@ -87,11 +83,11 @@ class HonoDatastarSSE {
   }
 
   /**
-   * Send a merge signals event
+   * Send a patch signals event
    */
-  mergeSignals(
+  patchSignals(
     signals: Record<string, Jsonifiable>,
-    options?: MergeSignalsOptions
+    options?: PatchSignalsOptions
   ) {
     const dataLines = [`signals ${JSON.stringify(signals)}`];
 
@@ -99,72 +95,65 @@ class HonoDatastarSSE {
       dataLines.push(`onlyIfMissing ${options.onlyIfMissing}`);
     }
 
-    this.sendEvent(EVENT_TYPES.MERGE_SIGNALS, dataLines, options);
+    this.sendEvent(EVENT_TYPES.PATCH_SIGNALS, dataLines, options);
   }
 
   /**
-   * Send a merge fragments event
+   * Send a patch elements event
    */
-  mergeFragments(fragments: unknown, options?: MergeFragmentsOptions) {
-    const dataLines = [`fragments ${String(fragments)}`];
+  patchElements(elements: string | Element, options?: PatchElementsOptions) {
+    const dataLines: string[] = [];
 
     if (options?.selector) {
       dataLines.push(`selector ${options.selector}`);
     }
 
-    if (options?.mergeMode && options.mergeMode !== "morph") {
-      dataLines.push(`mergeMode ${options.mergeMode}`);
+    if (options?.mode && options.mode !== "outer") {
+      dataLines.push(`mode ${options.mode}`);
     }
 
     if (options?.useViewTransition) {
       dataLines.push(`useViewTransition ${options.useViewTransition}`);
     }
 
-    this.sendEvent(EVENT_TYPES.MERGE_FRAGMENTS, dataLines, options);
-  }
+    // Convert Element to string if needed, then split by lines and add each line
+    const elementsString =
+      typeof elements === "string" ? elements : elements.toString();
+    const elementLines = elementsString
+      .split("\n")
+      .filter((line: string) => line.trim());
+    elementLines.forEach((line: string) => {
+      dataLines.push(`elements ${line}`);
+    });
 
-  /**
-   * Send a remove fragments event
-   */
-  removeFragments(selector: string, options?: DatastarEventOptions) {
-    this.sendEvent(
-      EVENT_TYPES.REMOVE_FRAGMENTS,
-      [`selector ${selector}`],
-      options
-    );
-  }
-
-  /**
-   * Send a remove signals event
-   */
-  removeSignals(paths: string[], options?: DatastarEventOptions) {
-    const dataLines = paths.map((path) => `paths ${path}`);
-    this.sendEvent(EVENT_TYPES.REMOVE_SIGNALS, dataLines, options);
+    this.sendEvent(EVENT_TYPES.PATCH_ELEMENTS, dataLines, options);
   }
 
   /**
    * Send an execute script event
    */
   executeScript(script: string, options?: ExecuteScriptOptions) {
-    const dataLines = [`script ${script}`];
+    const { autoRemove = true, attributes = [] } = options || {};
 
-    if (options?.attributes) {
-      if (Array.isArray(options.attributes)) {
-        options.attributes.forEach((attr) => {
-          dataLines.push(`attributes ${attr}`);
-        });
-      } else {
-        Object.entries(options.attributes).forEach(([key, value]) => {
-          dataLines.push(`attributes ${key} ${value}`);
-        });
-      }
+    // Build script tag with attributes
+    let scriptTag = "<script";
+
+    if (autoRemove) {
+      scriptTag += ' data-effect="el.remove()"';
     }
 
-    if (options?.autoRemove !== undefined) {
-      dataLines.push(`autoRemove ${options.autoRemove}`);
-    }
+    attributes.forEach((attr) => {
+      scriptTag += ` ${attr}`;
+    });
 
-    this.sendEvent(EVENT_TYPES.EXECUTE_SCRIPT, dataLines, options);
+    scriptTag += `>${script}</script>`;
+
+    // Use patchElements with append mode to body
+    this.patchElements(scriptTag, {
+      selector: "body",
+      mode: "append",
+      ...options,
+    });
   }
 
   /**
@@ -178,14 +167,14 @@ class HonoDatastarSSE {
 /**
  * Create a Datastar SSE stream with Hono
  */
-export function createDatastarStream(
+export const createDatastarStream = (
   onStart: (sse: HonoDatastarSSE) => Promise<void> | void,
   options?: {
     onError?: (error: unknown) => Promise<void> | void;
     onAbort?: () => Promise<void> | void;
     keepalive?: boolean;
   }
-) {
+) => {
   const stream = new ReadableStream<Uint8Array>({
     start: async (controller) => {
       const sse = new HonoDatastarSSE(controller);
@@ -216,4 +205,4 @@ export function createDatastarStream(
   return new Response(stream, {
     headers: SSE_HEADERS,
   });
-}
+};

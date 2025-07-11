@@ -23,8 +23,8 @@ app.get("/shape", () => {
   const nextShape = SHAPES[lastShapeIndex]!;
 
   return createDatastarStream((sse) => {
-    sse.mergeSignals({ shape: nextShape });
-    sse.mergeFragments(<Shape shape={nextShape} />);
+    sse.patchSignals({ shape: nextShape });
+    sse.patchElements(<Shape shape={nextShape} />);
   });
 });
 
