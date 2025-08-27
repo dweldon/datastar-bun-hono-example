@@ -1,3 +1,5 @@
+import { type FC } from 'hono/jsx';
+
 export const SHAPES = ['note', 'heart', 'circle', 'diamond'] as const;
 
 type Shape = (typeof SHAPES)[number];
@@ -13,7 +15,7 @@ const shapeCharacter = new Map<Shape, string>([
   ['diamond', '◆'],
 ]);
 
-export const Shape = ({ shape }: ShapeProps) => {
+export const Shape: FC<ShapeProps> = ({ shape }) => {
   if (!shape) return <div id="shape"></div>;
 
   return (

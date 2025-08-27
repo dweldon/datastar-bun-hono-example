@@ -1,6 +1,6 @@
-import { type PropsWithChildren } from 'hono/jsx';
+import { type FC, type PropsWithChildren } from 'hono/jsx';
 
-export const Page = ({ children }: PropsWithChildren) => (
+export const Page: FC<PropsWithChildren> = ({ children }) => (
   <html lang="en">
     <head>
       <meta charset="UTF-8" />
