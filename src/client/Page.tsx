@@ -18,7 +18,7 @@ export const Page: FC<PropsWithChildren> = ({ children }) => (
       </main>
       <script
         type="module"
-        src="https://cdn.jsdelivr.net/gh/starfederation/datastar@main/bundles/datastar.js"
+        src="https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.5/bundles/datastar.js"
       ></script>
     </body>
   </html>
