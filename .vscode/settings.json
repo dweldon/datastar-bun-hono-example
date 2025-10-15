@@ -11,7 +11,7 @@
   "files.insertFinalNewline": true,
   "explorer.fileNesting.enabled": true,
   "explorer.fileNesting.patterns": {
-    "package.json": ".*,*.lock,tsconfig*,*.config.js"
+    "package.json": ".*,*.lock,tsconfig*,biome.json"
   },
-  "cSpell.words": ["datastar"]
+  "cSpell.words": ["autofocus", "datastar"]
 }

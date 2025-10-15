@@ -1,4 +1,4 @@
-import { type FC } from 'hono/jsx';
+import type { FC } from 'hono/jsx';
 
 export const SHAPES = ['note', 'heart', 'circle', 'diamond'] as const;
 

@@ -213,7 +213,7 @@ const readSignalsFromQuery = (req: HonoRequest): ReadSignalsResponse => {
   try {
     const signals = JSON.parse(queryString) as JsonObject;
     return { success: true, signals };
-  } catch (error) {
+  } catch {
     return READ_SIGNALS_PARSE_ERROR;
   }
 };
@@ -224,7 +224,7 @@ const readSignalsFromBody = async (
   try {
     const signals = (await req.json()) as unknown as JsonObject;
     return { success: true, signals };
-  } catch (error) {
+  } catch {
     return READ_SIGNALS_PARSE_ERROR;
   }
 };

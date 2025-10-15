@@ -1,4 +1,4 @@
-import { type FC, type PropsWithChildren } from 'hono/jsx';
+import type { FC, PropsWithChildren } from 'hono/jsx';
 
 export const Page: FC<PropsWithChildren> = ({ children }) => (
   <html lang="en">
@@ -14,7 +14,9 @@ export const Page: FC<PropsWithChildren> = ({ children }) => (
           You got: <span data-text="$shape"></span>
         </p>
         {children}
-        <button data-on-click="@get('/shape')">Get Shape</button>
+        <button type="button" data-on-click="@get('/shape')">
+          Get Shape
+        </button>
       </main>
       <script
         type="module"
