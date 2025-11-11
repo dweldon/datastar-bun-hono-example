@@ -21,7 +21,7 @@ app.get('/', (c) =>
 
 app.get('/shape', async (c) => {
   const reader = await ServerSentEventGenerator.readSignals(c);
-  if (reader.success) console.log(reader.signals);
+  if (reader.success) console.log('Previous state:', reader.signals);
 
   // Rotate to the next shape index
   lastShapeIndex = (lastShapeIndex + 1) % SHAPES.length;

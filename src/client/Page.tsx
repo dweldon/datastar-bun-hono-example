@@ -8,19 +8,19 @@ export const Page: FC<PropsWithChildren> = ({ children }) => (
       <title>Datastar-Bun-Hono-Example</title>
     </head>
     <body>
-      <main data-signals-shape="">
+      <main data-signals:shape="">
         <p>Click the button to get a shape</p>
-        <p data-show="$shape.length > 0">
+        <p style="display: none" data-show="$shape.length > 0">
           You got: <span data-text="$shape"></span>
         </p>
         {children}
-        <button type="button" data-on-click="@get('/shape')">
+        <button type="button" data-on:click="@get('/shape')">
           Get Shape
         </button>
       </main>
       <script
         type="module"
-        src="https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.5/bundles/datastar.js"
+        src="https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.6/bundles/datastar.js"
       ></script>
     </body>
   </html>
