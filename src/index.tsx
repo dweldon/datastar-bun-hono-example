@@ -1,8 +1,7 @@
 import { Hono } from 'hono';
 import { jsxRenderer } from 'hono/jsx-renderer';
-
 import { Page } from './client/Page';
-import { Shape, SHAPES } from './client/Shape';
+import { SHAPES, Shape } from './client/Shape';
 import { ServerSentEventGenerator } from './serverSentEventGenerator';
 
 const app = new Hono();

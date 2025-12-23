@@ -1,10 +1,10 @@
-import type { JsonObject } from 'type-fest';
 import type { Context, HonoRequest } from 'hono';
 import {
-  streamSSE,
   type SSEMessage,
   type SSEStreamingApi,
+  streamSSE,
 } from 'hono/streaming';
+import type { JsonObject } from 'type-fest';
 
 // -----------------------------------------------------------------------------
 // Stream
