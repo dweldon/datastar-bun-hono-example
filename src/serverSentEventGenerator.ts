@@ -44,6 +44,7 @@ type PatchElementsParameters = {
     mode?: ElementPatchMode;
     eventId?: string;
     selector?: string;
+    namespace?: 'html' | 'svg' | 'mathml';
     retryDuration?: number;
     useViewTransition?: boolean;
   };
@@ -103,6 +104,9 @@ class DatastarStreamingApi {
     }
     if (options?.useViewTransition === true) {
       dataLines.push('useViewTransition true');
+    }
+    if (options?.namespace && options.namespace !== 'html') {
+      dataLines.push(`namespace ${options.namespace}`);
     }
 
     dataLines.push(...this.prefixDataLines('elements', elementsString));

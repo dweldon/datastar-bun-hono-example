@@ -14,5 +14,9 @@
   "explorer.fileNesting.patterns": {
     "package.json": ".*,*.lock,tsconfig*,biome.json"
   },
-  "cSpell.words": ["autofocus", "datastar"]
+  "cSpell.words": [
+    "autofocus",
+    "datastar",
+    "mathml"
+  ]
 }
