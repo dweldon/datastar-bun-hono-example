@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { jsxRenderer } from 'hono/jsx-renderer';
 import { Page } from './client/Page';
 import { SHAPES, Shape } from './client/Shape';
-import { ServerSentEventGenerator } from './serverSentEventGenerator';
+import { datastar } from './datastar';
 
 const app = new Hono();
 app.use(jsxRenderer());
@@ -19,7 +19,7 @@ app.get('/', (c) =>
 );
 
 app.get('/shape', async (c) => {
-  const reader = await ServerSentEventGenerator.readSignals(c);
+  const reader = await datastar.readSignals(c);
   if (reader.success) console.log('Previous state:', reader.signals);
 
   // Rotate to the next shape index
@@ -27,7 +27,7 @@ app.get('/shape', async (c) => {
   const nextShape = SHAPES[lastShapeIndex];
   if (!nextShape) throw new Error('No shape found');
 
-  return ServerSentEventGenerator.stream(c, async (stream) => {
+  return datastar.stream(c, async (stream) => {
     await stream.patchSignals({ signals: { shape: nextShape } });
     await Bun.sleep(200);
     await stream.patchElements({

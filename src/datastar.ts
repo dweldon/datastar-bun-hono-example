@@ -145,6 +145,10 @@ class DatastarStreamingApi {
     });
   }
 
+  public async heartbeat(): Promise<void> {
+    await this.stream.write(': heartbeat\n\n');
+  }
+
   private send(message: DatastarSSEMessage): Promise<void> {
     return this.stream.writeSSE(message);
   }
@@ -158,13 +162,31 @@ class DatastarStreamingApi {
   }
 }
 
+type StreamOptions = {
+  heartbeatInterval?: number;
+};
+
 const stream = (
   c: Context,
-  cb: (dsa: DatastarStreamingApi) => Promise<void>
+  cb: (dsa: DatastarStreamingApi) => Promise<void>,
+  options?: StreamOptions
 ): Response => {
   return streamSSE(c, async (stream) => {
     const dsa = new DatastarStreamingApi(stream);
-    await cb(dsa);
+
+    if (options?.heartbeatInterval) {
+      const interval = setInterval(() => {
+        void dsa.heartbeat();
+      }, options.heartbeatInterval);
+
+      try {
+        await cb(dsa);
+      } finally {
+        clearInterval(interval);
+      }
+    } else {
+      await cb(dsa);
+    }
   });
 };
 
@@ -225,6 +247,11 @@ const readSignalsFromQuery = (req: HonoRequest): ReadSignalsResponse => {
 const readSignalsFromBody = async (
   req: HonoRequest
 ): Promise<ReadSignalsResponse> => {
+  const contentLength = Number(req.header('content-length') || 0);
+  if (contentLength > MAX_JSON_SIZE) {
+    return READ_SIGNALS_SIZE_ERROR;
+  }
+
   try {
     const signals = (await req.json()) as unknown as JsonObject;
     return { success: true, signals };
@@ -234,10 +261,10 @@ const readSignalsFromBody = async (
 };
 
 // -----------------------------------------------------------------------------
-// ServerSentEventGenerator
+// Datastar
 // -----------------------------------------------------------------------------
 
-export const ServerSentEventGenerator = {
+export const datastar = {
   stream,
   readSignals,
 };
