@@ -8,6 +8,7 @@
     "jsx": "react-jsx",
     "allowJs": true,
     "jsxImportSource": "hono/jsx",
+    "types": ["bun"],
 
     // Bundler mode
     "moduleResolution": "bundler",
