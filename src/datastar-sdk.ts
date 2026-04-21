@@ -272,7 +272,7 @@ const readSignalsFromBody = async (
 // Datastar
 // -----------------------------------------------------------------------------
 
-export const datastar = {
+export const ServerSentEventGenerator = {
   stream,
   readSignals,
 };
