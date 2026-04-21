@@ -27,15 +27,15 @@ app.get('/shape', async (c) => {
   const nextShape = SHAPES[lastShapeIndex];
   if (!nextShape) throw new Error('No shape found');
 
-  return ServerSentEventGenerator.stream(c, async (stream) => {
-    await stream.patchSignals({ signals: { shape: nextShape } });
+  return ServerSentEventGenerator.stream(c, async (sse) => {
+    await sse.patchSignals({ signals: { shape: nextShape } });
     await Bun.sleep(200);
-    await stream.patchElements({
+    await sse.patchElements({
       elements: <Shape shape={nextShape} />,
       options: { useViewTransition: true },
     });
     await Bun.sleep(200);
-    await stream.executeScript({
+    await sse.executeScript({
       script: `console.log("The shape is ${nextShape}")`,
     });
   });

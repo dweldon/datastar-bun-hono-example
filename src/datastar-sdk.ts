@@ -68,7 +68,11 @@ type ExecuteScriptParameters = {
   };
 };
 
-class DatastarStreamingApi {
+type StreamOptions = {
+  heartbeatInterval?: number;
+};
+
+export class ServerSentEventGenerator {
   private readonly stream: SSEStreamingApi;
 
   constructor(stream: SSEStreamingApi) {
@@ -168,35 +172,38 @@ class DatastarStreamingApi {
   private prefixDataLines(prefix: string, data: string): string[] {
     return data.split('\n').map((line) => `${prefix} ${line}`);
   }
-}
 
-type StreamOptions = {
-  heartbeatInterval?: number;
-};
+  public static stream(
+    c: Context,
+    cb: (sse: ServerSentEventGenerator) => Promise<void>,
+    options?: StreamOptions
+  ): Response {
+    return streamSSE(c, async (stream) => {
+      const sse = new ServerSentEventGenerator(stream);
 
-const stream = (
-  c: Context,
-  cb: (dsa: DatastarStreamingApi) => Promise<void>,
-  options?: StreamOptions
-): Response => {
-  return streamSSE(c, async (stream) => {
-    const dsa = new DatastarStreamingApi(stream);
+      if (options?.heartbeatInterval) {
+        const interval = setInterval(() => {
+          void sse.heartbeat();
+        }, options.heartbeatInterval);
 
-    if (options?.heartbeatInterval) {
-      const interval = setInterval(() => {
-        void dsa.heartbeat();
-      }, options.heartbeatInterval);
-
-      try {
-        await cb(dsa);
-      } finally {
-        clearInterval(interval);
+        try {
+          await cb(sse);
+        } finally {
+          clearInterval(interval);
+        }
+      } else {
+        await cb(sse);
       }
-    } else {
-      await cb(dsa);
-    }
-  });
-};
+    });
+  }
+
+  public static readSignals(c: Context): Promise<ReadSignalsResponse> {
+    const method = c.req.method;
+    return method === 'GET' || method === 'DELETE'
+      ? Promise.resolve(readSignalsFromQuery(c.req as HonoRequest))
+      : readSignalsFromBody(c.req as HonoRequest);
+  }
+}
 
 // -----------------------------------------------------------------------------
 // Read Signals
@@ -226,13 +233,6 @@ const READ_SIGNALS_SIZE_ERROR: ReadSignalsError = {
 const READ_SIGNALS_PARSE_ERROR: ReadSignalsError = {
   success: false,
   error: 'Unknown error while parsing request',
-};
-
-const readSignals = (c: Context): Promise<ReadSignalsResponse> => {
-  const method = c.req.method;
-  return method === 'GET' || method === 'DELETE'
-    ? Promise.resolve(readSignalsFromQuery(c.req as HonoRequest))
-    : readSignalsFromBody(c.req as HonoRequest);
 };
 
 const readSignalsFromQuery = (req: HonoRequest): ReadSignalsResponse => {
@@ -267,13 +267,4 @@ const readSignalsFromBody = async (
   } catch {
     return READ_SIGNALS_PARSE_ERROR;
   }
-};
-
-// -----------------------------------------------------------------------------
-// Datastar
-// -----------------------------------------------------------------------------
-
-export const ServerSentEventGenerator = {
-  stream,
-  readSignals,
 };
