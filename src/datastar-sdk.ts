@@ -135,7 +135,7 @@ export class ServerSentEventGenerator {
     script,
     options,
   }: ExecuteScriptParameters): Promise<void> {
-    const attributes: string[] = options?.attributes ?? [];
+    const attributes: string[] = [...(options?.attributes ?? [])];
 
     const shouldAutoRemove = options?.autoRemove ?? true;
     if (shouldAutoRemove) {
@@ -183,7 +183,7 @@ export class ServerSentEventGenerator {
 
       if (options?.heartbeatInterval) {
         const interval = setInterval(() => {
-          void sse.heartbeat();
+          sse.heartbeat().catch(() => clearInterval(interval));
         }, options.heartbeatInterval);
 
         try {
@@ -200,8 +200,8 @@ export class ServerSentEventGenerator {
   public static readSignals(c: Context): Promise<ReadSignalsResponse> {
     const method = c.req.method;
     return method === 'GET' || method === 'DELETE'
-      ? Promise.resolve(readSignalsFromQuery(c.req as HonoRequest))
-      : readSignalsFromBody(c.req as HonoRequest);
+      ? Promise.resolve(readSignalsFromQuery(c.req))
+      : readSignalsFromBody(c.req);
   }
 }
 
