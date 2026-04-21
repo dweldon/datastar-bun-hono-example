@@ -4,7 +4,15 @@ import {
   type SSEStreamingApi,
   streamSSE,
 } from 'hono/streaming';
-import type { JsonObject } from 'type-fest';
+
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
+type JsonObject = { [key: string]: JsonValue };
 
 // -----------------------------------------------------------------------------
 // Stream

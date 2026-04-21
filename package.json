@@ -9,8 +9,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "hono": "^4.12.12",
-    "type-fest": "^5.5.0"
+    "hono": "^4.12.12"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.11",
