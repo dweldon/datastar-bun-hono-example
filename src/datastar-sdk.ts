@@ -229,7 +229,8 @@ const READ_SIGNALS_PARSE_ERROR: ReadSignalsError = {
 };
 
 const readSignals = (c: Context): Promise<ReadSignalsResponse> => {
-  return c.req.method === 'GET'
+  const method = c.req.method;
+  return method === 'GET' || method === 'DELETE'
     ? Promise.resolve(readSignalsFromQuery(c.req as HonoRequest))
     : readSignalsFromBody(c.req as HonoRequest);
 };
