@@ -5,6 +5,9 @@ import {
   streamSSE,
 } from 'hono/streaming';
 
+const EVENT_PATCH_SIGNALS = 'datastar-patch-signals';
+const EVENT_PATCH_ELEMENTS = 'datastar-patch-elements';
+
 type JsonValue =
   | string
   | number
@@ -13,13 +16,6 @@ type JsonValue =
   | JsonValue[]
   | { [key: string]: JsonValue };
 type JsonObject = { [key: string]: JsonValue };
-
-// -----------------------------------------------------------------------------
-// Stream
-// -----------------------------------------------------------------------------
-
-const EVENT_PATCH_SIGNALS = 'datastar-patch-signals';
-const EVENT_PATCH_ELEMENTS = 'datastar-patch-elements';
 
 type EventType = typeof EVENT_PATCH_SIGNALS | typeof EVENT_PATCH_ELEMENTS;
 
@@ -71,6 +67,10 @@ type ExecuteScriptParameters = {
 type StreamOptions = {
   heartbeatInterval?: number;
 };
+
+// -----------------------------------------------------------------------------
+// ServerSentEventGenerator
+// -----------------------------------------------------------------------------
 
 export class ServerSentEventGenerator {
   private readonly stream: SSEStreamingApi;
@@ -206,7 +206,7 @@ export class ServerSentEventGenerator {
 }
 
 // -----------------------------------------------------------------------------
-// Read Signals
+// Read signals helpers
 // -----------------------------------------------------------------------------
 
 type ReadSignalsError = {
